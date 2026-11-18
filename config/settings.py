@@ -104,7 +104,9 @@ if REDIS_URL:
     CHANNEL_LAYERS = {
         "default": {
             "BACKEND": "channels_redis.core.RedisChannelLayer",
-            "CONFIG": {"hosts": [REDIS_URL]},
+            # redis-py's default 5s socket timeout equals channels-redis's 5s blocking read,
+            # so idle WebSockets crashed with TimeoutError. Give the socket more room.
+            "CONFIG": {"hosts": [{"address": REDIS_URL, "socket_timeout": 30}]},
         },
     }
 else:
