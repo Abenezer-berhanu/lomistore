@@ -151,8 +151,8 @@ Good references:
 | [ ] | docker compose | Several containers together: services, volumes, healthchecks, depends_on | `compose.yaml` |
 | [ ] | Environment files | Secrets in `.env`, never in git | `.env.example` |
 | [ ] | DNS | How `bot.yourdomain.com` finds the server | `docs/DEPLOY.md` Part 3 |
-| [ ] | HTTPS and TLS | Encryption; Cloudflare handles the certificate | `docs/DEPLOY.md` Part 3 |
-| [ ] | Reverse proxy and tunnels | Something in front of the app that receives public traffic | `compose.yaml` (`tunnel`) |
+| [ ] | HTTPS and TLS | Encryption; Cloudflare edge certificate + Cloudflare Origin Certificate on nginx | `docs/DEPLOY.md` Part 3 |
+| [ ] | Reverse proxy | nginx receives public traffic and forwards it to the app; WebSocket upgrade headers | `deploy/nginx/lomi-store.conf` |
 | [ ] | Logs | `docker compose logs`; never log secrets | `config/settings.py` (`LOGGING`) |
 | [ ] | Cron | Scheduled tasks (daily backups) | `docs/DEPLOY.md` Part 6 |
 

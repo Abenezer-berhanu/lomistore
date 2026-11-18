@@ -42,7 +42,7 @@ Staff call the customer and update the status in Django Admin
 | Phone | Accepted from the share button, a contact card, or typed. Never refused. The order is marked when the number isn't the customer's own Telegram number. |
 | Sold out | Add `SOLD OUT` to the caption, or untick it in Admin. Deleting a post doesn't remove the product. |
 | Stack | Django 5.2 LTS, Channels (WebSockets), PostgreSQL, Redis, Daphne (ASGI server) |
-| Hosting | Hetzner VPS with Docker Compose, reached through a Cloudflare Tunnel at `bot.<yourdomain>` |
+| Hosting | Hetzner VPS with Docker Compose, behind nginx, at `bot.<yourdomain>` (Cloudflare DNS, proxied) |
 
 ## Code map
 
@@ -54,6 +54,7 @@ Staff call the customer and update the status in Django Admin
 | `telegram_bot/` | Telegram API client, webhook view, the conversation logic (`handlers.py`), the `telegram_setup` command |
 | `conftest.py` | Test helpers: a fake bot and Telegram update builders |
 | `Dockerfile`, `compose.yaml` | Production containers |
+| `deploy/nginx/` | nginx site config for the server |
 
 ## Phase 0 reading guide
 

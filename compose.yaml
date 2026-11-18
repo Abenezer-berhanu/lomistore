@@ -1,4 +1,5 @@
-# Lomi Store on one server: app + PostgreSQL + Redis + Cloudflare Tunnel.
+# Lomi Store on one server: app + PostgreSQL + Redis.
+# nginx on the host receives public HTTPS traffic from Cloudflare and forwards it to the app.
 # Start:   docker compose up -d --build
 # Logs:    docker compose logs -f web
 
@@ -13,7 +14,7 @@ services:
     environment:
       DATABASE_URL: postgres://lomi:${POSTGRES_PASSWORD}@db:5432/lomi
       REDIS_URL: redis://redis:6379/0
-    # Only reachable from the server itself (for health checks). The public reaches it through the tunnel.
+    # Only reachable from the server itself. The public reaches it through nginx (deploy/nginx/lomi-store.conf).
     ports:
       - "127.0.0.1:${APP_PORT}:8000"
     depends_on:
@@ -40,16 +41,6 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
-
-  # Outbound-only connection to Cloudflare: no open ports, no changes to other projects' web servers.
-  tunnel:
-    image: cloudflare/cloudflared:latest
-    restart: unless-stopped
-    command: tunnel --no-autoupdate run
-    environment:
-      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
-    depends_on:
-      - web
 
 volumes:
   postgres_data:

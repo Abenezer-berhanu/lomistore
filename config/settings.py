@@ -134,7 +134,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOGIN_URL = "admin:login"
 
 if not DEBUG:
-    # Cloudflare terminates HTTPS and forwards plain HTTP with this header.
+    # nginx terminates HTTPS and forwards plain HTTP to the app with this header.
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
