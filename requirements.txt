@@ -1,2 +1,9 @@
-# Packages the app needs to run in production. Empty until Django arrives in Phase 2.
-# Exact versions (==) so every machine, and the server, installs the same thing.
+# Packages the app needs in production. Exact versions so the server installs the same thing.
+Django==5.2.19
+channels==4.3.2
+channels-redis==4.3.0
+daphne==4.2.3
+httpx==0.28.1
+whitenoise==6.12.0
+psycopg[binary]==3.3.9
+dj-database-url==3.1.2

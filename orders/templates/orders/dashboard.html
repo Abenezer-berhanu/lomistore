@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lomi Store orders</title>
+  <style>
+    :root {
+      --background: #ffffff;
+      --foreground: #0a0a0a;
+      --success: #15803d;
+      --destructive: #b91c1c;
+      --muted: color-mix(in srgb, var(--foreground) 55%, var(--background));
+      --line: color-mix(in srgb, var(--foreground) 12%, var(--background));
+      --soft: color-mix(in srgb, var(--foreground) 4%, var(--background));
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--background);
+      color: var(--foreground);
+      font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    a { color: inherit; }
+    .page { max-width: 1200px; margin: 0 auto; padding: 24px 16px 48px; }
+    header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; margin-bottom: 24px; }
+    h1 { font-size: 22px; margin: 0; letter-spacing: -0.01em; }
+    .stat { color: var(--muted); }
+    .stat strong { color: var(--foreground); font-variant-numeric: tabular-nums; font-size: 18px; }
+    .spacer { flex: 1; }
+    .live { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+    .live[data-state="live"] .dot { background: var(--success); }
+    .live[data-state="off"] .dot { background: var(--destructive); }
+    button, .button {
+      font: inherit; font-size: 14px; padding: 8px 14px; border-radius: 8px; cursor: pointer;
+      border: 1px solid var(--line); background: var(--background); color: var(--foreground); text-decoration: none;
+    }
+    button[aria-pressed="true"] { background: var(--foreground); color: var(--background); border-color: var(--foreground); }
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+    th, td { padding: 12px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    .num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .sub { display: block; font-size: 13px; color: var(--muted); }
+    .warn { display: block; font-size: 12px; color: var(--destructive); }
+    .badge { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); white-space: nowrap; }
+    .badge[data-status="new"] { background: var(--foreground); color: var(--background); border-color: var(--foreground); }
+    .badge[data-status="confirmed"], .badge[data-status="delivered"] { color: var(--success); border-color: var(--success); }
+    .badge[data-status="cancelled"] { color: var(--destructive); border-color: var(--destructive); }
+    tr.fresh td { background: var(--soft); }
+    .empty { padding: 48px 0; text-align: center; color: var(--muted); }
+    @media (max-width: 760px) {
+      thead { display: none; }
+      table, tbody, tr, td { display: block; }
+      tr { border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; margin-bottom: 12px; }
+      td { border: 0; padding: 6px 0; display: flex; justify-content: space-between; gap: 16px; text-align: right; }
+      td::before { content: attr(data-label); color: var(--muted); font-size: 13px; text-align: left; }
+      tr.fresh { background: var(--soft); }
+      tr.fresh td { background: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <h1>Lomi Store orders</h1>
+      <span class="stat">New <strong id="new-count">{{ new_count }}</strong></span>
+      <span class="live" id="live" data-state="connecting"><span class="dot"></span><span id="live-text">Connecting</span></span>
+      <span class="spacer"></span>
+      <button type="button" id="sound" aria-pressed="false">Turn on sound</button>
+      <a class="button" href="{% url 'admin:index' %}">Admin</a>
+    </header>
+
+    <table>
+      <thead>
+        <tr><th>Order</th><th>Product</th><th>Size</th><th>Price</th><th>Phone</th><th>Customer</th><th>Status</th><th></th></tr>
+      </thead>
+      <tbody id="orders"></tbody>
+    </table>
+    <p class="empty" id="empty" hidden>No orders yet. They appear here the moment a customer orders.</p>
+  </div>
+
+  {{ orders|json_script:"orders-data" }}
+  <script>
+    const tbody = document.getElementById("orders");
+    const empty = document.getElementById("empty");
+    const newCountEl = document.getElementById("new-count");
+    const known = new Map();
+    let newCount = Number(newCountEl.textContent);
+
+    // Build cells with textContent only: customer names come from Telegram and must never be treated as HTML.
+    function cell(label, ...parts) {
+      const td = document.createElement("td");
+      td.dataset.label = label;
+      const box = document.createElement("span");
+      for (const part of parts) if (part) box.append(part);
+      td.append(box);
+      return td;
+    }
+    function span(className, text) {
+      const el = document.createElement("span");
+      el.className = className;
+      el.textContent = text;
+      return el;
+    }
+    function link(href, text) {
+      const a = document.createElement("a");
+      a.href = href;
+      a.textContent = text;
+      return a;
+    }
+    function buildRow(order) {
+      const tr = document.createElement("tr");
+      tr.dataset.id = order.id;
+      const badge = span("badge", order.status_label);
+      badge.dataset.status = order.status;
+      tr.append(
+        cell("Order", span("num", "#" + order.id), span("sub", order.created_at)),
+        cell("Product", document.createTextNode(order.product_name)),
+        cell("Size", span("num", String(order.size))),
+        cell("Price", span("num", order.price.toLocaleString("en-US") + " ETB")),
+        cell("Phone", link("tel:" + order.phone, order.phone), order.phone_is_own ? null : span("warn", "Not their Telegram number")),
+        cell("Customer", document.createTextNode(order.customer), order.username ? span("sub", "@" + order.username) : null),
+        cell("Status", badge),
+        cell("", link(order.admin_url, "Open")),
+      );
+      return tr;
+    }
+    function upsert(order, isLive) {
+      const previous = known.get(order.id);
+      if (previous && previous.status === "new") newCount -= 1;
+      if (order.status === "new" && (previous || isLive)) newCount += 1;
+      known.set(order.id, order);
+
+      const row = buildRow(order);
+      const existing = tbody.querySelector(`tr[data-id="${order.id}"]`);
+      if (existing) {
+        existing.replaceWith(row);
+      } else if (isLive) {
+        tbody.prepend(row);
+        row.classList.add("fresh");
+        beep();
+      } else {
+        tbody.append(row);
+      }
+      newCountEl.textContent = Math.max(newCount, 0);
+      document.title = newCount > 0 ? `(${newCount}) Lomi Store orders` : "Lomi Store orders";
+      empty.hidden = known.size > 0;
+    }
+
+    JSON.parse(document.getElementById("orders-data").textContent).forEach((order) => upsert(order, false));
+    empty.hidden = known.size > 0;
+
+    // Sound: browsers only allow audio after a click, so staff turn it on once per visit.
+    const soundButton = document.getElementById("sound");
+    let audio = null;
+    soundButton.addEventListener("click", () => {
+      if (audio) {
+        audio.close();
+        audio = null;
+      } else {
+        audio = new AudioContext();
+        beep();
+      }
+      soundButton.setAttribute("aria-pressed", String(Boolean(audio)));
+      soundButton.textContent = audio ? "Sound on" : "Turn on sound";
+    });
+    function beep() {
+      if (!audio) return;
+      [0, 0.22].forEach((offset) => {
+        const osc = audio.createOscillator();
+        const gain = audio.createGain();
+        osc.frequency.value = 880;
+        gain.gain.setValueAtTime(0.2, audio.currentTime + offset);
+        gain.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + offset + 0.18);
+        osc.connect(gain).connect(audio.destination);
+        osc.start(audio.currentTime + offset);
+        osc.stop(audio.currentTime + offset + 0.2);
+      });
+    }
+
+    // Live updates with automatic reconnect (waits 1s, 2s, 4s ... up to 30s).
+    const liveEl = document.getElementById("live");
+    const liveText = document.getElementById("live-text");
+    let attempts = 0;
+    function setLive(state, text) {
+      liveEl.dataset.state = state;
+      liveText.textContent = text;
+    }
+    function connect() {
+      const scheme = location.protocol === "https:" ? "wss" : "ws";
+      const socket = new WebSocket(`${scheme}://${location.host}/ws/orders/`);
+      socket.onopen = () => {
+        attempts = 0;
+        setLive("live", "Live");
+      };
+      socket.onmessage = (event) => {
+        const message = JSON.parse(event.data);
+        if (message.type === "order") upsert(message.order, true);
+      };
+      socket.onclose = (event) => {
+        if (event.code === 4403) {
+          setLive("off", "Logged out. Reload the page.");
+          return;
+        }
+        setLive("off", "Reconnecting");
+        const delay = Math.min(30000, 1000 * 2 ** attempts);
+        attempts += 1;
+        setTimeout(connect, delay);
+      };
+    }
+    connect();
+  </script>
+</body>
+</html>
