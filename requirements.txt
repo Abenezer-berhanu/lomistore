@@ -1,0 +1,2 @@
+# Packages the app needs to run in production. Empty until Django arrives in Phase 2.
+# Exact versions (==) so every machine, and the server, installs the same thing.

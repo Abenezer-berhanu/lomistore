@@ -1,0 +1,3 @@
+# Store text files with LF line endings in git, even on Windows.
+# The server is Linux, and shell scripts / Dockerfiles break with Windows CRLF endings.
+* text=auto eol=lf

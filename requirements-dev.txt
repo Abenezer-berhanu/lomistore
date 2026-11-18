@@ -1,0 +1,5 @@
+# Packages for development only (tests, tools). The server doesn't need these.
+# Install with:  python -m pip install -r requirements-dev.txt
+-r requirements.txt
+
+pytest==9.2.0

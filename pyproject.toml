@@ -1,0 +1,9 @@
+# One config file for Python tools, like package.json "config" sections in JS.
+# Ruff, mypy and pytest-django settings will be added here in later phases.
+
+[tool.pytest.ini_options]
+# Where to look for tests, so plain `pytest` works from the project root.
+testpaths = ["catalog"]
+# -ra: print a short summary of anything that didn't pass.
+# --strict-markers: a typo like @pytest.mark.parametrise fails instead of being ignored.
+addopts = "-ra --strict-markers"

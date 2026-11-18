@@ -72,7 +72,7 @@ Each phase has its own file in `docs/`. A phase file is written when we reach it
 
 | # | Phase | What we build | What you learn |
 |---|---|---|---|
-| 0 | [Python foundations](phase-00-python.md) | Caption parser with tests | venv, pip, modules, f-strings, string methods, comprehensions, type hints, exceptions, dataclasses, regex, pytest, git |
+| 0 | [Python foundations](phase-00-python.md) | Caption parser with tests | Packages, constants, regex, custom exceptions, dataclasses, type hints, comprehensions, walrus, `match`, pytest fixtures and parametrize |
 | 1 | Telegram with plain Python | Script that calls the Bot API directly | HTTP with `httpx`, JSON, environment variables, how the Bot API works with no library hiding it |
 | 2 | Django fundamentals | Django project, models, admin | Project vs app, settings, URLs, views, models, ORM, migrations, Django Admin, Django shell |
 | 3 | Webhook + product import | Channel post becomes a product, bot adds the Order button | Webhooks, CSRF, secret header check, Cloudflare Tunnel, management commands, handling edited posts |
@@ -92,27 +92,22 @@ The shop can take real orders after **Phase 5**. Phases 6 to 10 make it producti
 
 ## 3. How we work
 
-Every step in a phase file follows the same loop:
-
-1. **Read**: a short explanation of the idea, compared with JavaScript where it helps.
-2. **Type**: instructions in plain words ("create a function called X that takes Y, loop over Z, if ... then ..."). No copy-paste code for the project parts. You type it.
-3. **Check**: a command to run in the terminal and the output you should see.
-4. **Report**: send me the step number, your code (or say "done"), and what the terminal printed.
-5. **Review**: I answer in this format:
-   - ✅ **Correct**, or ❌ **Bug** (what is wrong and how to find it yourself), or ⚠️ **Works, but...**
-   - 🧠 **Senior way**: how an experienced engineer would write it, and **why** (readability, safety, speed, easier to test).
-6. When a phase is done: commit with git and fill in the "What I learned" section at the end of the phase file.
-
-Rules for you:
-- If something is unclear, ask before typing. Asking is part of learning.
-- If you're stuck for more than about 20 minutes, tell me. I'll give a hint first, not the answer.
-- Don't skip the checks. Seeing the expected output is how you know it works.
+1. **I build one whole phase**: code, tests, and the tests passing.
+2. **The code teaches.** Important lines have short comments:
+   - `LEARN:` what the feature is
+   - `SENIOR:` why a professional writes it this way
+   - `BEGINNER:` the simpler way, when there is one
+   - `WHY NOT:` why we don't use the beginner way
+3. **I commit the phase** before starting the next one. The start of a new phase never has uncommitted work.
+4. **The phase file is a reading guide**: which file to open, which lines to read in which order, what to focus on, commands to run, and the output to expect.
+5. **You read, run and ask.** Ask about anything unclear. When you're ready, say "next phase".
+6. **Later phases** have small "change this yourself" exercises, so reading turns into writing. The Capstone (Phase 12) is all you.
 
 ---
 
 ## 4. Progress
 
-- [ ] Phase 0: Python foundations
+- [x] Phase 0: Python foundations (caption parser, 37 tests)
 - [ ] Phase 1: Telegram with plain Python
 - [ ] Phase 2: Django fundamentals
 - [ ] Phase 3: Webhook + product import
