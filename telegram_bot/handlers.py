@@ -228,7 +228,8 @@ def handle_typed_phone(bot: Bot, customer: Customer, text: str) -> None:
 def place_order(bot: Bot, customer: Customer, phone: str, is_own: bool) -> None:
     with transaction.atomic():
         # Lock the customer row so two quick messages can't create the same order twice.
-        customer = Customer.objects.select_for_update().select_related("pending_product").get(pk=customer.pk)
+        # No select_related here: PostgreSQL can't lock the nullable side of an outer join.
+        customer = Customer.objects.select_for_update().get(pk=customer.pk)
         product, size = customer.pending_product, customer.pending_size
         if product is None or size is None:
             return

@@ -1,4 +1,6 @@
 import pytest
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
 
 from conftest import CUSTOMER_ID, private_message, size_tap
 from orders.models import Customer, Order
@@ -68,6 +70,17 @@ def test_typed_phone_is_normalized_and_marked_unverified(picked_size, bot) -> No
 
     order = Order.objects.get()
     assert (order.phone, order.phone_is_own) == ("+251922334455", False)
+
+
+def test_order_lock_query_has_no_join(picked_size, bot) -> None:
+    # PostgreSQL refuses SELECT ... FOR UPDATE on the nullable side of an outer join.
+    # SQLite ignores FOR UPDATE, so check the SQL shape instead.
+    with CaptureQueriesContext(connection) as queries:
+        handle_update(private_message("0922334455"), bot)
+
+    customer_selects = [q["sql"] for q in queries if q["sql"].startswith("SELECT") and 'FROM "orders_customer"' in q["sql"]]
+    assert customer_selects
+    assert not any("JOIN" in sql for sql in customer_selects)
 
 
 def test_invalid_typed_phone_asks_again(picked_size, bot) -> None:
